@@ -1,11 +1,22 @@
 {
-  "name": "spicemustflow",
+  "name": "spice-must",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "browser": "index.js",
+  "homepage": "https://github.com/mneil/spice-must",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mneil/spice-must.git"
   },
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "scripts": {
+    "test": "node tests/index.js",
+    "build": "webpack --mode production"
+  },
+  "author": "Michael Neil <@mneil>",
+  "license": "MIT",
+  "description": "A poorly named \"random\" human readable name generator based on foods",
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "webpack": "^5.95.0"
+  }
 }

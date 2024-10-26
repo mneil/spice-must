@@ -1,92 +1,64 @@
-const data = require("./names.json");
-const keys = Object.keys(data);
-// create a list of indices of each data key and randomize it
-const order = keys.reduce((o, key) => {
-  o[key] = Array(data[key].length)
-    .fill(1)
-    .map((_, i) => i)
-    .sort(() => Math.random() - 0.5);
-  return o;
-}, {});
-// current position of each data key. They all start at 0 which points to a random index in order
-const laps = keys.reduce((o, key) => {
-  o[key] = 0;
-  return o;
-}, {});
-// track the position we're in for each lap
-const position = keys.reduce((o, key) => {
-  o[key] = order[key][laps[key]];
-  return o;
-}, {});
+const list = require("./names.json");
 
+function* recipe(input) {
+  const keys = Object.keys(input);
+  const data = keys.reduce((o, key) => {
+    o[key] = input[key].sort(() => Math.random() - 0.5);
+    return o;
+  }, {});
+  const indices = keys.map(() => 0);
+  const total = keys.reduce((o, n) => o * data[n].length, 1);
+  const offset = keys.map(() => 0);
+  let iterations = 0;
 
-console.log("order", order);
-console.log("position", position);
-console.log("laps", laps);
-
-function get() {
-  return keys.reduce((o, key) => {
-    const r = o + data[key][position[key]];
-    position[key]++;
-    if (position[key] === data[key].length) {
-      position[key] = 0;
-    }
-    if (position[key] === order[key][laps[key]]) {
-      laps[key]++;
-      if (laps[key] === data[key].length) {
-        laps[key] = 0;
+  /**
+   * Increment the offsets to avoid names being too similar
+   * @param {Number} i index number not to increment
+   */
+  const increment = (i) => {
+    for (let n = 0; n < keys.length; n++) {
+      if (n === i) {
+        continue;
       }
-      position[key] = order[key][laps[key]];
+      offset[n]++;
+      if (offset[n] === data[keys[n]].length) {
+        offset[n] = 0;
+      }
     }
-    return r;
+  }
 
-    // const r = o + data[key][position[key]];
+  while (true) {
+    const combination = keys.reduce((out, key, index) => {
+      let n = indices[index] + offset[index];
+      if (n >= data[key].length) {
+        n = n - data[key].length;
+      }
+      return out + data[key][n];
+    }, "");
+    yield combination;
 
-    // position[key]++;
-    // if (position[key] === data[key].length) {
-    //   position[key] = 0;
-    // }
-    // if(order[key][laps[key]] === position[key]) {
-    //   laps[key]++;
-    //   if(laps[key] === data[key].length) {
-    //     laps[key] = 0;
-    //   }
-    // }
-
-    // return r;
-
-
-
-
-
-    // position[key]++;
-    // if (position[key] === data[key].length) {
-    //   position[key] = 0;
-    // }
-    // const r = o + data[key][position[key]];
-    // // we've looped the track once. Increment number of laps
-    // if (position[key] === order[key][laps[key]]) {
-    //   // this never hits 0
-    //   laps[key]++;
-    //   // race is over. Reset it.
-    //   if (laps[key] === data[key].length) {
-    //     laps[key] = 0;
-    //   }
-    //   position[key] = order[key][laps[key]];
-    // }
-    // return r;
-  }, "");
+    // Increment indices to get the next combination
+    for (let i = keys.length - 1; i >= 0; i--) {
+      indices[i]++;
+      if (indices[i] < data[keys[i]].length) {
+        increment(i);
+        break;
+      }
+      indices[i] = 0;
+    }
+    // If all combinations are exhausted, reshuffle and start over
+    if (iterations++ === total) {
+      yield *recipe(input);
+    }
+  }
 }
 
-// console.log("lengths", keys.map((n) => data[n].length));
-// console.log("order", order);
-// console.log("laps", laps);
-// console.log("position", position);
+const generator = recipe(list);
+
+function flow() {
+  return generator.next().value;
+}
 
 module.exports = {
-  get,
-  data,
-  order,
-  laps,
-  position,
+  flow,
 };
